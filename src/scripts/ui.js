@@ -9,7 +9,7 @@ const singleContainer = document.getElementById("single-slider-container");
 const rangeContainer = document.getElementById("range-slider-container");
 
 function updateSingleSlider() {
-  const unitText = state.unit === "letters" ? "літер" : "складів";
+  const unitText = state.unit === "letters" ? "letters" : "syllables";
   document.getElementById("single-label").textContent = singleSlider.value;
   document.getElementById("single-unit-label").textContent = unitText;
   document.getElementById("single-min-label").textContent = singleSlider.min;
@@ -39,7 +39,7 @@ function updateRangeSliders() {
     sliderMin.value = lo;
   }
 
-  const unitText = state.unit === "letters" ? "літер" : "складів";
+  const unitText = state.unit === "letters" ? "letters" : "syllables";
   document.getElementById("range-label-from").textContent = lo;
   document.getElementById("range-label-to").textContent = hi;
   document.getElementById("range-unit-label").textContent = unitText;
