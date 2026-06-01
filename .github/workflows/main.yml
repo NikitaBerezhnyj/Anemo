@@ -1,4 +1,4 @@
-name: Deploy to Anemo GitHub Pages
+name: Deploy Anemo to GitHub Pages
 
 on:
   push:
