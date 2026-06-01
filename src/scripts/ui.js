@@ -112,18 +112,36 @@ export function renderResults(words) {
     item.className = "name-item";
 
     const slug = word.toLowerCase();
+
+    const domainLinksHtml = `
+      <a
+        class="domain-link"
+        href="https://www.namecheap.com/domains/registration/results/?domain=${slug}.${state.domain}"
+        target="_blank"
+        rel="noopener"
+      >
+        .${state.domain} ↗
+      </a>
+    `;
+
     item.innerHTML = `
       <div class="name-left">
         <span class="name-text">${word}</span>
-        <span class="name-index">variant ${String(i + 1).padStart(2, "0")}</span>
+        <span class="name-index">
+          variant ${String(i + 1).padStart(2, "0")}
+        </span>
       </div>
+
       <div class="name-actions">
-        <button class="copy-btn" aria-label="Copy">${COPY_ICON}</button>
+        <button class="copy-btn" aria-label="Копіювати">
+          ${COPY_ICON}
+        </button>
+
         <div class="domain-links">
-          <a class="domain-link" href="https://www.godaddy.com/domainsearch/find?domain=${slug}.com" target="_blank" rel="noopener">.com ↗</a>
-          <a class="domain-link" href="https://namecheap.com/domains/registration/results/?domain=${slug}.io" target="_blank" rel="noopener">.io ↗</a>
+          ${domainLinksHtml}
         </div>
-      </div>`;
+      </div>
+    `;
 
     const copyBtn = item.querySelector(".copy-btn");
     copyBtn.addEventListener("click", () => {
@@ -136,4 +154,34 @@ export function renderResults(words) {
 
     container.appendChild(item);
   });
+}
+
+export function initDomainSection() {
+  const PRESETS = ["com", "io", "co", "app", "dev", "ai", "xyz", "me"];
+  const chipsContainer = document.getElementById("domain-chips");
+  const customInput = document.getElementById("domain-custom-input");
+
+  function setDomain(val) {
+    state.domain = val;
+    renderChips();
+    customInput.value = PRESETS.includes(val) ? "" : val;
+  }
+
+  function renderChips() {
+    chipsContainer.innerHTML = "";
+    PRESETS.forEach((tld) => {
+      const chip = document.createElement("button");
+      chip.className = "domain-chip" + (state.domain === tld ? " active" : "");
+      chip.textContent = "." + tld;
+      chip.addEventListener("click", () => setDomain(tld));
+      chipsContainer.appendChild(chip);
+    });
+  }
+
+  customInput.addEventListener("input", () => {
+    const val = customInput.value.trim().toLowerCase().replace(/^\./, "");
+    if (val) setDomain(val);
+  });
+
+  renderChips();
 }

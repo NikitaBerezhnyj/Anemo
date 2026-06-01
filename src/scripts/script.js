@@ -1,6 +1,11 @@
 import { state, resolveLength } from "./state.js";
 import { generateName } from "./generator.js";
-import { refreshSliders, toggleLengthMode, renderResults } from "./ui.js";
+import {
+  refreshSliders,
+  toggleLengthMode,
+  renderResults,
+  initDomainSection,
+} from "./ui.js";
 
 const COUNT = 5;
 const MAX_LEN = 12;
@@ -94,4 +99,5 @@ document.getElementById("start-letter").addEventListener("keydown", (e) => {
   if (e.key === "Enter") doGenerate();
 });
 
+initDomainSection();
 refreshSliders();

@@ -4,6 +4,7 @@ export const state = {
   fixed: 5,
   rangeMin: 4,
   rangeMax: 7,
+  domain: "com",
 };
 
 export function resolveLength(s = state) {
