@@ -1,25 +1,23 @@
-import { state } from "./state.js";
+import { state, saveState } from "./state.js";
 
 const singleSlider = document.getElementById("single-slider");
 const sliderMin = document.getElementById("slider-min");
 const sliderMax = document.getElementById("slider-max");
 const dualFill = document.getElementById("dual-fill");
-
 const singleContainer = document.getElementById("single-slider-container");
 const rangeContainer = document.getElementById("range-slider-container");
 
-function updateSingleSlider() {
+function updateSingleSliderUI() {
   const unitText = state.unit === "letters" ? "letters" : "syllables";
   document.getElementById("single-label").textContent = singleSlider.value;
   document.getElementById("single-unit-label").textContent = unitText;
   document.getElementById("single-min-label").textContent = singleSlider.min;
   document.getElementById("single-max-label").textContent = singleSlider.max;
-  state.fixed = parseInt(singleSlider.value);
 }
 
 function updateDualFill() {
-  const min = parseInt(sliderMin.min);
-  const max = parseInt(sliderMin.max);
+  const min = parseInt(sliderMin.min) || 1;
+  const max = parseInt(sliderMin.max) || 10;
   const lo = parseInt(sliderMin.value);
   const hi = parseInt(sliderMax.value);
 
@@ -30,25 +28,13 @@ function updateDualFill() {
   dualFill.style.width = hiP - loP + "%";
 }
 
-function updateRangeSliders() {
-  let lo = parseInt(sliderMin.value);
-  let hi = parseInt(sliderMax.value);
-
-  if (lo >= hi) {
-    lo = hi - 1;
-    sliderMin.value = lo;
-  }
-
+function updateRangeSlidersUI() {
   const unitText = state.unit === "letters" ? "letters" : "syllables";
-  document.getElementById("range-label-from").textContent = lo;
-  document.getElementById("range-label-to").textContent = hi;
+  document.getElementById("range-label-from").textContent = sliderMin.value;
+  document.getElementById("range-label-to").textContent = sliderMax.value;
   document.getElementById("range-unit-label").textContent = unitText;
   document.getElementById("range-min-label").textContent = sliderMin.min;
-  document.getElementById("range-max-label").textContent = sliderMin.max;
-
-  state.rangeMin = lo;
-  state.rangeMax = hi;
-
+  document.getElementById("range-max-label").textContent = sliderMax.max;
   updateDualFill();
 }
 
@@ -61,12 +47,20 @@ export function refreshSliders() {
     el.min = min;
     el.max = max;
   }
-  singleSlider.value = isLetters ? 5 : 3;
-  sliderMin.value = min;
-  sliderMax.value = Math.min(max - 1, isLetters ? 7 : 4);
 
-  updateSingleSlider();
-  updateRangeSliders();
+  if (state.fixed > max) state.fixed = max;
+  if (state.fixed < min) state.fixed = min;
+
+  if (state.rangeMax > max) state.rangeMax = max;
+  if (state.rangeMin < min) state.rangeMin = min;
+  if (state.rangeMin >= state.rangeMax) state.rangeMin = state.rangeMax - 1;
+
+  singleSlider.value = state.fixed;
+  sliderMin.value = state.rangeMin;
+  sliderMax.value = state.rangeMax;
+
+  updateSingleSliderUI();
+  updateRangeSlidersUI();
 }
 
 export function toggleLengthMode() {
@@ -79,16 +73,46 @@ export function toggleLengthMode() {
   }
 }
 
-singleSlider.addEventListener("input", updateSingleSlider);
-sliderMin.addEventListener("input", updateRangeSliders);
-sliderMax.addEventListener("input", updateRangeSliders);
+singleSlider.addEventListener("input", () => {
+  state.fixed = parseInt(singleSlider.value);
+  updateSingleSliderUI();
+  saveState();
+});
+
+sliderMin.addEventListener("input", () => {
+  let lo = parseInt(sliderMin.value);
+  let hi = parseInt(sliderMax.value);
+
+  if (lo >= hi) {
+    lo = hi - 1;
+    sliderMin.value = lo;
+  }
+
+  state.rangeMin = lo;
+  updateRangeSlidersUI();
+  saveState();
+});
+
+sliderMax.addEventListener("input", () => {
+  let lo = parseInt(sliderMin.value);
+  let hi = parseInt(sliderMax.value);
+
+  if (hi <= lo) {
+    hi = lo + 1;
+    sliderMax.value = hi;
+  }
+
+  state.rangeMax = hi;
+  updateRangeSlidersUI();
+  saveState();
+});
 
 function copyText(text, btn) {
   navigator.clipboard
     .writeText(text)
     .then(() => {
       btn.classList.add("copied");
-      btn.setAttribute("aria-label", "Скопійовано");
+      btn.setAttribute("aria-label", "Збережено");
       setTimeout(() => {
         btn.classList.remove("copied");
         btn.setAttribute("aria-label", "Копіювати");
@@ -110,38 +134,21 @@ export function renderResults(words) {
   words.forEach((word, i) => {
     const item = document.createElement("div");
     item.className = "name-item";
-
     const slug = word.toLowerCase();
-
     const domainLinksHtml = `
-      <a
-        class="domain-link"
-        href="https://www.namecheap.com/domains/registration/results/?domain=${slug}.${state.domain}"
-        target="_blank"
-        rel="noopener"
-      >
+      <a class="domain-link" href="https://www.namecheap.com/domains/registration/results/?domain=${slug}.${state.domain}" target="_blank" rel="noopener">
         .${state.domain} ↗
-      </a>
-    `;
+      </a>`;
 
     item.innerHTML = `
       <div class="name-left">
         <span class="name-text">${word}</span>
-        <span class="name-index">
-          variant ${String(i + 1).padStart(2, "0")}
-        </span>
+        <span class="name-index">variant ${String(i + 1).padStart(2, "0")}</span>
       </div>
-
       <div class="name-actions">
-        <button class="copy-btn" aria-label="Копіювати">
-          ${COPY_ICON}
-        </button>
-
-        <div class="domain-links">
-          ${domainLinksHtml}
-        </div>
-      </div>
-    `;
+        <button class="copy-btn" aria-label="Копіювати">${COPY_ICON}</button>
+        <div class="domain-links">${domainLinksHtml}</div>
+      </div>`;
 
     const copyBtn = item.querySelector(".copy-btn");
     copyBtn.addEventListener("click", () => {
@@ -163,6 +170,7 @@ export function initDomainSection() {
 
   function setDomain(val) {
     state.domain = val;
+    saveState();
     renderChips();
     customInput.value = PRESETS.includes(val) ? "" : val;
   }

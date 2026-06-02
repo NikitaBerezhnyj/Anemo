@@ -1,4 +1,4 @@
-import { state, resolveLength } from "./state.js";
+import { state, resolveLength, saveState, loadState } from "./state.js";
 import { generateName } from "./generator.js";
 import {
   refreshSliders,
@@ -53,6 +53,7 @@ sidebar?.addEventListener(
 document.querySelectorAll(".pill[data-unit]").forEach((btn) => {
   btn.addEventListener("click", () => {
     state.unit = btn.dataset.unit;
+    saveState();
     document
       .querySelectorAll(".pill[data-unit]")
       .forEach((b) => b.classList.remove("active"));
@@ -64,11 +65,13 @@ document.querySelectorAll(".pill[data-unit]").forEach((btn) => {
 document.querySelectorAll(".pill[data-type]").forEach((btn) => {
   btn.addEventListener("click", () => {
     state.lengthType = btn.dataset.type;
+    saveState();
     document
       .querySelectorAll(".pill[data-type]")
       .forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
     toggleLengthMode();
+    refreshSliders();
   });
 });
 
@@ -87,6 +90,7 @@ function doGenerate() {
   }
 
   renderResults(words);
+  saveState();
   closeDrawer();
 }
 
@@ -99,5 +103,18 @@ document.getElementById("start-letter").addEventListener("keydown", (e) => {
   if (e.key === "Enter") doGenerate();
 });
 
+loadState();
+
+document.querySelectorAll(".pill[data-unit]").forEach((btn) => {
+  if (btn.dataset.unit === state.unit) btn.classList.add("active");
+  else btn.classList.remove("active");
+});
+
+document.querySelectorAll(".pill[data-type]").forEach((btn) => {
+  if (btn.dataset.type === state.lengthType) btn.classList.add("active");
+  else btn.classList.remove("active");
+});
+
 initDomainSection();
+toggleLengthMode();
 refreshSliders();
